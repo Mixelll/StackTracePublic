@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>StackTrace &ndash; Complete Documentation (v 2025.1.0)</title>
+<style>
+ body{font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin:0 auto;max-width:1000px;padding:2.5rem;color:#222}
+ h1,h2,h3,h4{font-weight:600;margin-top:2.5rem}
+ h1{font-size:2.2rem;margin-top:0}
+ code,pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:0.92rem}
+ pre{padding:0.8rem 1rem;background:#f5f7fa;border:1px solid #e1e4e8;
+     overflow-x:auto;border-radius:6px}
+ table{border-collapse:collapse;margin:1rem 0;width:100%}
+ th,td{padding:0.4rem 0.6rem;border:1px solid #d0d7de;text-align:left}
+ th{background:#f0f3f6;font-weight:600}
+ a{color:#0059c7;text-decoration:none} a:hover{text-decoration:underline}
+ ul li{margin:0.4rem 0}
+ .note{background:#fff8c5;border-left:4px solid #e3b341;padding:0.6rem 1rem}
+ .warn{background:#fdecea;border-left:4px solid #f0876b;padding:0.6rem 1rem}
+ nav{border-bottom:1px solid #d0d7de;margin-bottom:2rem;padding-bottom:0.5rem}
+ nav a{margin-right:1rem;font-size:0.95rem}
+</style>
+</head>
+<body>
+<nav>
+  <strong>StackTrace Docs</strong> &nbsp;
+  <a href="#overview">Overview</a>
+  <a href="#install">Installation</a>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#settings">Settings</a>
+  <a href="#actions">IDE Actions</a>
+  <a href="#report-format">Report Format</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#licensing">Licensing</a>
+  <a href="#faq">FAQ</a>
+  <a href="#changelog">Change Log</a>
+</nav>
+
+<h1 id="overview">1&nbsp;· Overview</h1>
+<p><b>StackTrace</b> is a forensic “snapshot-on-pause” plugin for Python debugging in JetBrains IDEs.  
+When execution stops—via breakpoint, exception, or a manual trigger—it builds a comprehensive <em>Markdown</em> report and pushes it straight to your clipboard.</p>
+
+<ul>
+  <li><b>Language Support</b>: Python 3.x (PyCharm 2023.1 &ndash; 2025.1, IntelliJ IDEA / CLion / DataGrip with the Python plugin).</li>
+  <li><b>IDE Responsiveness</b>: All heavy work runs on IntelliJ’s pooled executor; the EDT never blocks.</li>
+  <li><b>Data Privacy</b>: Everything is processed locally; no network I/O is performed.</li>
+</ul>
+
+<h2>Key Captured Elements</h2>
+<ul>
+  <li><b>Call stack</b> with code, arguments, locals.</li>
+  <li><b>Console output</b> (STDERR &amp; warnings).</li>
+  <li><b>Environment metadata</b> (OS, CPU, memory, IDE &amp; JRE versions).</li>
+  <li><b>Python interpreter</b> &amp; package list.</li>
+  <li><b>Thread table</b> (PID, TID, status, current thread).</li>
+  <li><b>Called-function source</b> (project / external libs, depth-limited).</li>
+</ul>
+
+<div class="note">
+<b>Tip &raquo;</b> Configure prompts in <em>Settings → Tools → StackTrace</em> and feed the
+snapshot to ChatGPT or another LLM for instant diagnosis.
+</div>
+
+<h1 id="install">2&nbsp;· Installation</h1>
+<ol>
+  <li>Open <b>Settings | Plugins ➞ Marketplace</b>.</li>
+  <li>Search for <kbd>StackTrace</kbd> &raquo; <b>Install</b>.</li>
+  <li>Restart the IDE.</li>
+  <li>(Paid) Activate licence under <em>Settings | Plugins | StackTrace</em>.</li>
+</ol>
+
+<h1 id="quickstart">3&nbsp;· Quick Start</h1>
+<ol>
+  <li>Set a breakpoint or run code that raises an exception.</li>
+  <li>When the debugger pauses, StackTrace auto-fires (unless you disabled
+      <code>Auto-run when debugger pauses</code>).</li>
+  <li>Paste the clipboard into Slack, Jira, GitHub, or an LLM chat.</li>
+  <li>Optional: Trigger manually via <b>Tools → Run StackTrace Now</b>
+      or bind it to a key in <em>Settings | Keymap</em>.</li>
+</ol>
+
+<h1 id="settings">4&nbsp;· Settings Dialog</h1>
+<p>Access via <b>Tools → StackTrace Plugin Settings</b>.</p>
+
+<table>
+<thead><tr><th>Tab</th><th>Main Options (all persist to <code>StackTraceSettings.xml</code>)</th></tr></thead>
+<tbody>
+<tr><td><b>Trace &amp; Prompts</b></td><td>
+<ul>
+<li>Stack frames to capture&nbsp;(<code>stackFrameCount</code>)</li>
+<li>Global / Error / Debug prompts + include flags</li>
+<li>Add error text block</li>
+<li>Auto-run on break</li>
+</ul></td></tr>
+
+<tr><td><b>Called Functions</b></td><td>
+<ul>
+<li>Include project callees (depth 0-9)</li>
+<li>Include external-library callees (depth 0-9)</li>
+</ul></td></tr>
+
+<tr><td><b>System Info</b></td><td>
+Interpreter path &amp; version, venv/conda info, installed packages, OS/CPU, IDE/JRE.</td></tr>
+
+<tr><td><b>Threads</b></td><td>Include thread &amp; concurrency info table.</td></tr>
+
+<tr><td><b>Paths</b></td><td>
+Show any paths / show full absolute paths.</td></tr>
+</tbody>
+</table>
+
+<h1 id="actions">5&nbsp;· IDE Actions</h1>
+<table>
+<thead><tr><th>Action ID</th><th>Default Place</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>StackTracePlugin.SettingsAction</code></td>
+<td>Tools menu, Main toolbar</td>
+<td>Opens the StackTrace settings dialog.</td></tr>
+
+<tr><td><code>StackTracePlugin.RunNow</code></td>
+<td>Tools menu</td>
+<td>Generates a snapshot for the <em>current paused</em> debugger session.</td></tr>
+</tbody>
+</table>
+
+<h1 id="report-format">6&nbsp;· Report Format (Markdown)</h1>
+<pre>
+## System Information
+PyCharm Professional 2025.1
+JRE: 17.0.11 (JetBrains)
+OS : Windows 11 (amd64)
+CPU cores: 24,  JVM max-heap: 4096 MB
+…
+
+## Stack Frames
+
+### Frame 1: src/app.py:87
+```python
+def make_request(url: str) -> dict:
+    ...
