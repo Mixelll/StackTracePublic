@@ -1,21 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>StackTrace &ndash; Complete Documentation (v 2025.1.0)</title>
+<title>StackTrace &ndash; Complete Documentation (v&nbsp;2025.1.1)</title>
 <style>
- body{font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      margin:0 auto;max-width:1000px;padding:2.5rem;color:#222}
+ body{font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0 auto;max-width:1000px;padding:2.5rem;color:#222}
  h1,h2,h3,h4{font-weight:600;margin-top:2.5rem}
  h1{font-size:2.2rem;margin-top:0}
  code,pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:0.92rem}
- pre{padding:0.8rem 1rem;background:#f5f7fa;border:1px solid #e1e4e8;
-     overflow-x:auto;border-radius:6px}
+ pre{padding:0.8rem 1rem;background:#f5f7fa;border:1px solid #e1e4e8;overflow-x:auto;border-radius:6px}
  table{border-collapse:collapse;margin:1rem 0;width:100%}
  th,td{padding:0.4rem 0.6rem;border:1px solid #d0d7de;text-align:left}
  th{background:#f0f3f6;font-weight:600}
- a{color:#0059c7;text-decoration:none} a:hover{text-decoration:underline}
+ a{color:#0059c7;text-decoration:none}
+ a:hover{text-decoration:underline}
  ul li{margin:0.4rem 0}
  .note{background:#fff8c5;border-left:4px solid #e3b341;padding:0.6rem 1rem}
  .warn{background:#fdecea;border-left:4px solid #f0876b;padding:0.6rem 1rem}
@@ -30,6 +28,7 @@
   <a href="#install">Installation</a>
   <a href="#quickstart">Quick Start</a>
   <a href="#settings">Settings</a>
+  <a href="#capture">Capture Logic</a>
   <a href="#actions">IDE Actions</a>
   <a href="#report-format">Report Format</a>
   <a href="#architecture">Architecture</a>
@@ -39,93 +38,131 @@
 </nav>
 
 <h1 id="overview">1&nbsp;· Overview</h1>
-<p><b>StackTrace</b> is a forensic “snapshot-on-pause” plugin for Python debugging in JetBrains IDEs.  
-When execution stops—via breakpoint, exception, or a manual trigger—it builds a comprehensive <em>Markdown</em> report and pushes it straight to your clipboard.</p>
+<p><b>StackTrace</b> is a forensic “snapshot‑on‑pause” plugin for JetBrains IDEs. Whenever your debugger stops (breakpoint, exception, or manual trigger) it assembles a fully‑featured <em>Markdown</em> report <em>and copies it straight to the clipboard</em>&nbsp;&mdash; ready for Slack, Jira, GitHub, or an LLM prompt.</p>
 
 <ul>
-  <li><b>Language Support</b>: Python 3.x (PyCharm 2023.1 &ndash; 2025.1, IntelliJ IDEA / CLion / DataGrip with the Python plugin).</li>
+  <li><b>Languages</b>: Python&nbsp;3.x today. Java/Kotlin adapter arrives in&nbsp;v&nbsp;2025.2 (already in beta).</li>
+  <li><b>Zero‑restart install</b>: Hot‑loads instantly after the Marketplace download completes.</li>
   <li><b>IDE Responsiveness</b>: All heavy work runs on IntelliJ’s pooled executor; the EDT never blocks.</li>
-  <li><b>Data Privacy</b>: Everything is processed locally; no network I/O is performed.</li>
+  <li><b>Data Privacy</b>: 100&nbsp;% local processing &mdash; StackTrace never phones home.</li>
 </ul>
 
 <h2>Key Captured Elements</h2>
 <ul>
-  <li><b>Call stack</b> with code, arguments, locals.</li>
-  <li><b>Console output</b> (STDERR &amp; warnings).</li>
-  <li><b>Environment metadata</b> (OS, CPU, memory, IDE &amp; JRE versions).</li>
-  <li><b>Python interpreter</b> &amp; package list.</li>
-  <li><b>Thread table</b> (PID, TID, status, current thread).</li>
-  <li><b>Called-function source</b> (project / external libs, depth-limited).</li>
+  <li><b>Call stack</b> &mdash; code excerpt, argument values, locals, and the exact executed line.</li>
+  <li><b>Frame counters</b>
+      <ul>
+        <li><code>stackFrameCount</code>&nbsp;&mdash; upper limit of frames to snapshot (default&nbsp;50).</li>
+        <li><code>frameFullFileCount</code>&nbsp;&mdash; additionally dump the full source file for the <em>last N</em> frames (default&nbsp;0).</li>
+      </ul></li>
+  <li><b>Console output</b> &mdash; most‑recent <code>STDERR</code> block plus any warnings.</li>
+  <li><b>Thread table</b> &mdash; PID, TID, running/paused, current thread highlighted.</li>
+  <li><b>Environment metadata</b> &mdash; OS, CPU &amp; RAM, IDE build, JRE, interpreter path &amp; version.</li>
+  <li><b>Package list</b> &mdash; full <code>pip</code>/Conda inventory <em>or</em> only those imported in stack files.</li>
+  <li><b>Called‑function source</b>
+      <ul>
+        <li><b>Project callees</b> &mdash; discovered by static PSI walk; recursion depth 0‑9.</li>
+        <li><b>External‑library callees</b> &mdash; same walk but filtered to imports; recursion depth 0‑9.</li>
+        <li>Each group can be inlined as a code‑block or expanded to the full file.</li>
+      </ul></li>
+  <li><b>LLM‑ready prompts</b> &mdash; configurable global / error / debug templates inserted before the trace.</li>
 </ul>
 
-<div class="note">
-<b>Tip &raquo;</b> Configure prompts in <em>Settings → Tools → StackTrace</em> and feed the
-snapshot to ChatGPT or another LLM for instant diagnosis.
-</div>
+<div class="note"><b>Tip&nbsp;&raquo;</b> Tie <kbd>Run&nbsp;StackTrace&nbsp;Now</kbd> to <kbd>Ctrl&nbsp;+&nbsp;Shift&nbsp;+&nbsp;T</kbd> (or any keymap) for one‑tap snapshots.</div>
 
 <h1 id="install">2&nbsp;· Installation</h1>
 <ol>
   <li>Open <b>Settings | Plugins ➞ Marketplace</b>.</li>
-  <li>Search for <kbd>StackTrace</kbd> &raquo; <b>Install</b>.</li>
-  <li>Restart the IDE.</li>
-  <li>(Paid) Activate licence under <em>Settings | Plugins | StackTrace</em>.</li>
+  <li>Search for <kbd>StackTrace</kbd> → <b>Install</b>.</li>
+  <li><b>No restart required.</b> The <code>StackTrace</code> actions appear instantly.</li>
+  <li>(Paid edition) Activate your licence under <em>Settings | Plugins | StackTrace</em>.</li>
 </ol>
 
-<h1 id="quickstart">3&nbsp;· Quick Start</h1>
+<h1 id="quickstart">3&nbsp;· Quick&nbsp;Start</h1>
 <ol>
   <li>Set a breakpoint or run code that raises an exception.</li>
-  <li>When the debugger pauses, StackTrace auto-fires (unless you disabled
-      <code>Auto-run when debugger pauses</code>).</li>
-  <li>Paste the clipboard into Slack, Jira, GitHub, or an LLM chat.</li>
-  <li>Optional: Trigger manually via <b>Tools → Run StackTrace Now</b>
-      or bind it to a key in <em>Settings | Keymap</em>.</li>
+  <li>When the debugger pauses, StackTrace auto‑fires (unless you disabled
+      <em>Auto‑run when debugger pauses</em>).</li>
+  <li>Paste the clipboard into your bug tracker or LLM.</li>
+  <li>Optional: Trigger manually via <b>Tools → Run StackTrace Now</b> or a custom key binding.</li>
 </ol>
 
 <h1 id="settings">4&nbsp;· Settings Dialog</h1>
-<p>Access via <b>Tools → StackTrace Plugin Settings</b>.</p>
+<p>Access via <b>Tools → StackTrace Plugin Settings</b>. All options persist to <code>StackTraceSettings.xml</code>.</p>
 
 <table>
-<thead><tr><th>Tab</th><th>Main Options (all persist to <code>StackTraceSettings.xml</code>)</th></tr></thead>
+<thead><tr><th>Tab</th><th>Main Options</th></tr></thead>
 <tbody>
 <tr><td><b>Trace &amp; Prompts</b></td><td>
 <ul>
-<li>Stack frames to capture&nbsp;(<code>stackFrameCount</code>)</li>
-<li>Global / Error / Debug prompts + include flags</li>
-<li>Add error text block</li>
-<li>Auto-run on break</li>
+<li><b>Stack frames to capture</b> (<code>stackFrameCount</code>)</li>
+<li><b>Full source file for last&nbsp;N frames</b> (<code>frameFullFileCount</code>)</li>
+<li>Global / Error / Debug prompts &amp; include toggles</li>
+<li>Include <b>Error text block</b></li>
+<li><b>Auto‑run on break</b></li>
 </ul></td></tr>
 
 <tr><td><b>Called Functions</b></td><td>
 <ul>
-<li>Include project callees (depth 0-9)</li>
-<li>Include external-library callees (depth 0-9)</li>
+<li><b>Project callees</b>
+    <ul>
+      <li>Depth (<code>projectCalleeDepth</code>)</li>
+      <li>Attach full file (<code>includeFullFileProjectCallees</code>)</li>
+    </ul></li>
+<li><b>External‑library callees</b>
+    <ul>
+      <li>Depth (<code>externalCalleeDepth</code>)</li>
+      <li>Attach full file (<code>includeFullFileExternalCallees</code>)</li>
+    </ul></li>
 </ul></td></tr>
 
 <tr><td><b>System Info</b></td><td>
-Interpreter path &amp; version, venv/conda info, installed packages, OS/CPU, IDE/JRE.</td></tr>
+Python version &amp; interpreter path, venv/Conda info, installed packages mode, OS/CPU, IDE/JRE.</td></tr>
 
 <tr><td><b>Threads</b></td><td>Include thread &amp; concurrency info table.</td></tr>
 
-<tr><td><b>Paths</b></td><td>
-Show any paths / show full absolute paths.</td></tr>
+<tr><td><b>Paths</b></td><td>Show any paths / show full absolute paths.</td></tr>
 </tbody>
 </table>
 
-<h1 id="actions">5&nbsp;· IDE Actions</h1>
+<h1 id="capture">5&nbsp;· Capture Logic Details</h1>
+<h3>5.1 · Frame Counters</h3>
+<ul>
+  <li><code>stackFrameCount</code> caps the total number of frames captured (frames are taken from the top of the call stack downward).</li>
+  <li><code>frameFullFileCount</code> dumps <em>complete source files</em> for the <em>last N</em> frames (bottom of the captured list). Value 0 disables file dumping.</li>
+</ul>
+
+<h3>5.2 · Callee Discovery</h3>
+<p>For each frame’s owning function, StackTrace performs a static PSI traversal to find direct <code>foo()</code> calls:</p>
+<ul>
+  <li><b>Project Callees</b> &mdash; any function whose file is inside project content roots or under the project base‑dir.</li>
+  <li><b>External‑library Callees</b> &mdash; functions outside the project. Candidates are further filtered to belong to packages imported by the current stack files, eliminating noise from the standard library.</li>
+</ul>
+<p>Both categories support recursion depths 0‑999, calculated level by level to avoid infinite loops.</p>
+
+<h3>5.3 · Full File Fetching</h3>
+<ul>
+  <li><b>Frame files</b> &mdash; controlled by <code>frameFullFileCount</code>.</li>
+  <li><b>Callee files</b> &mdash; toggled independently for project and external callees.</li>
+  <li>Files are added to a <em>deduplicated</em> set, so duplicates across options appear once.</li>
+  <li>Each file is wrapped in a Markdown block headed <code>### Contents of file …</code>.</li>
+</ul>
+
+<h1 id="actions">6&nbsp;· IDE Actions</h1>
 <table>
 <thead><tr><th>Action ID</th><th>Default Place</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td><code>StackTracePlugin.SettingsAction</code></td>
-<td>Tools menu, Main toolbar</td>
-<td>Opens the StackTrace settings dialog.</td></tr>
+<td>Tools menu · Main toolbar</td>
+<td>Opens the settings dialog.</td></tr>
 
 <tr><td><code>StackTracePlugin.RunNow</code></td>
 <td>Tools menu</td>
-<td>Generates a snapshot for the <em>current paused</em> debugger session.</td></tr>
+<td>Generates a snapshot for the <em>current paused</em> session, even if auto‑run is off.</td></tr>
 </tbody>
 </table>
 
-<h1 id="report-format">6&nbsp;· Report Format (Markdown)</h1>
+<h1 id="report-format">7&nbsp;· Report Format (Markdown)</h1>
 <pre>
 ## System Information
 PyCharm Professional 2025.1
@@ -134,9 +171,80 @@ OS : Windows 11 (amd64)
 CPU cores: 24,  JVM max-heap: 4096 MB
 …
 
-## Stack Frames
+## Stack Frames (limit: 50)
 
 ### Frame 1: src/app.py:87
 ```python
 def make_request(url: str) -> dict:
     ...
+```
+Arguments
+- `url` = 'https://api.example.com/data'
+
+### Frame 50: src/core.py:12
+...
+
+## Called Project Functions (depth 2)
+### process_data – src/utils.py
+```python
+...
+```
+
+## Called External‑Library Functions (depth 1)
+### retry – site‑packages/tenacity/__init__.py
+```python
+...
+```
+
+## Full Source Files
+### Contents of file src/app.py
+```python
+...
+```
+</pre>
+<p>The full Markdown is always placed in the clipboard and echoed to the IDE log for inspection.</p>
+
+<h1 id="architecture">8&nbsp;· Architecture</h1>
+<ul>
+  <li><b>Listener‑based</b>: a project‑level <code>XDebuggerManagerListener</code> hooks debugger events.</li>
+  <li><b>Snapshot thread</b>: CPU‑heavy work off‑loads to <code>AppExecutorUtil</code>.</li>
+  <li><b>Language adapters</b>: small pluggable helpers. Python ships today; Java adapter in beta.</li>
+  <li><b>Zero‑restart lifecycle</b>: dynamic plugin API enables hot load/unload.</li>
+  <li><b>Licensing</b>: JetBrains Marketplace stamp (<code>PSTACKTRACE</code>) checked at runtime;.</li>
+</ul>
+
+<h1 id="licensing">9&nbsp;· Licensing</h1>
+<p>StackTrace ships in two flavours:</p>
+<ul>
+  <li><b>Paid edition</b> &mdash; unlimited frames, full feature set.</li>
+  <li><b>Free demo</b> &mdash; 15‑frame cap, external‑library features disabled.</li>
+</ul>
+
+<h1 id="faq">10&nbsp;· FAQ</h1>
+<h3>Do I need to restart after installing?</h3>
+<p>No. StackTrace hot‑loads instantly.</p>
+
+<h3>Does it work offline?</h3>
+<p>Yes. All processing is local.</p>
+
+<h3>Can I disable auto‑run?</h3>
+<p>Yes &mdash; uncheck <em>Auto‑run when debugger pauses</em> in the first tab.</p>
+
+<h3>Why is my package list empty?</h3>
+<p>If you use a remote interpreter, the IDE may not cache <code>PyPackageManager</code> data. Run <kbd>pip list</kbd> once to refresh.</p>
+
+<h1 id="changelog">11&nbsp;· Change Log</h1>
+<ul>
+  <li><b>2025.1.1</b>
+    <ul>
+      <li>First commercial release.</li>
+      <li>Zero‑restart install.</li>
+      <li>Thread table with current thread highlight.</li>
+      <li>External‑library caller filtering by imported package names.</li>
+      <li>Frame counters and full‑file dump options.</li>
+    </ul>
+  </li>
+</ul>
+
+</body>
+</html>
